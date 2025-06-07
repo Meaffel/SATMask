@@ -11,7 +11,7 @@ from pysmt.shortcuts import Symbol, And, GE, LE, Plus, Times, Ite, Real, Solver
 from pysmt.typing    import REAL
 
 from torchvision import datasets, transforms
-from model import SimpleCNN_28x28_k7, SimpleCNN_56x56_k14, SimpleCNN_84x84_k21
+from model import SimpleCNN_28x28_k7, SimpleCNN_56x56_k14, SimpleCNN_84x84_k21, SimpleCNN_112x112_k28
 
 
 # -----------------------------------------------------------------------------
@@ -177,7 +177,7 @@ def boxplot_stats(data, factor=1.5):
     }
 
 
-for HW in [28, 56, 84]:
+for HW in [112]:
     # 1) Load model & extract weights
     time_list = []
     device = torch.device("cpu")
@@ -190,6 +190,9 @@ for HW in [28, 56, 84]:
     elif HW == 84:
         model = SimpleCNN_84x84_k21().to(device)
         model.load_state_dict(torch.load("mnist_cnn_k21.pth", map_location=device))
+    elif HW == 112:
+        model = SimpleCNN_112x112_k28().to(device)
+        model.load_state_dict(torch.load("mnist_cnn_k28.pth", map_location=device))
     
     model.eval()
 
@@ -199,7 +202,8 @@ for HW in [28, 56, 84]:
     bfc   = model.fc.bias     .detach().cpu().numpy()  # (1,)
     for img, lab in ds:
         if lab not in (0,1): continue
-        img = F.interpolate(img, size=(HW, HW), mode='bilinear', align_corners=False)
+        img = img[None]
+        img = F.interpolate(img, size=(HW, HW), mode='bilinear', align_corners=False)[0]
         inp = img.unsqueeze(0).to(device)
         with torch.no_grad():
             logit = model(inp).item()
@@ -209,7 +213,7 @@ for HW in [28, 56, 84]:
             y0 = lab
             print(f"Picked MNIST {y0}, model predicted {pred}.")
 
-            formula, mask, t = create_equations(wconv, bconv, wfc, bfc, HW, HW, HW // 4, eps_pixel=0.001)
+            formula, mask, t = create_equations(wconv, bconv, wfc, bfc, HW, HW, HW // 4, eps_pixel=0.0001)
             time_to_solve = solve_equations(model, formula, mask, t, HW, HW)
             time_list.append(time_to_solve)
             if len(time_list) >= 10:

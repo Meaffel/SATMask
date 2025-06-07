@@ -211,7 +211,7 @@ for k in [7, 4, 2, 1]:
             y0 = lab
             print(f"Picked MNIST {y0}, model predicted {pred}.")
 
-            formula, mask, t = create_equations(wconv, bconv, wfc, bfc, 28, 28, k, eps_pixel=0.001)
+            formula, mask, t = create_equations(wconv, bconv, wfc, bfc, 28, 28, k, eps_pixel=0.0001)
             time_to_solve = solve_equations(model, formula, mask, t, 28, 28)
             time_list.append(time_to_solve)
             if len(time_list) >= 10:

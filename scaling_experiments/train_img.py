@@ -4,7 +4,7 @@ import torch.nn.functional as F
 import torch.optim as optim
 from torchvision import datasets, transforms
 from torch.utils.data import DataLoader
-from model import SimpleCNN_28x28_k7, SimpleCNN_56x56_k14, SimpleCNN_84x84_k21
+from model import SimpleCNN_28x28_k7, SimpleCNN_56x56_k14, SimpleCNN_84x84_k21, SimpleCNN_112x112_k28
 
 # 1. Hyperparameters
 batch_size   = 64
@@ -43,13 +43,15 @@ test_loader  = DataLoader(test_dataset,
                           pin_memory=True)
 
 # 3. Define the CNN (no MaxPool; use stride=2 in convs)
-for HW in [56, 84]:
+for HW in [112]:
     if HW == 28:
         model = SimpleCNN_28x28_k7().to(device)
     elif HW == 56:
         model = SimpleCNN_56x56_k14().to(device)
     elif HW == 84:
         model = SimpleCNN_84x84_k21().to(device)
+    elif HW == 112:
+        model = SimpleCNN_112x112_k28().to(device)
 
     # 4. Loss and optimizer
     criterion = nn.BCEWithLogitsLoss()
@@ -110,7 +112,10 @@ for HW in [56, 84]:
         print("Saved model to mnist_cnn_k7.pth")
     elif HW == 56:
         torch.save(model.state_dict(), 'mnist_cnn_k14.pth')
-        print("Saved model to mnist_cnn_k4.pth")
+        print("Saved model to mnist_cnn_k14.pth")
     elif HW == 84:
         torch.save(model.state_dict(), 'mnist_cnn_k21.pth')
-        print("Saved model to mnist_cnn_k2.pth")
+        print("Saved model to mnist_cnn_k21.pth")
+    elif HW == 112:
+        torch.save(model.state_dict(), 'mnist_cnn_k28.pth')
+        print("Saved model to mnist_cnn_k28.pth")
