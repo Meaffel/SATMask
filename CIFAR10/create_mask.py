@@ -10,33 +10,49 @@ from pathlib import Path
 import time
 
 def save_adversarial(x0, M, y0, t, mu, sigma, eps_pixel,
-                     out_dir="adv_results", prefix="example"):
+                     out_dir="adv_results", prefix="cifar_adv"):
     """
-    x0:      (1,32,32) normalized original
-    M:       (1,32,32) SMT-found normalized perturbation
+    x0:      (1,28,28) normalized original
+    M:       (1,28,28) normalized perturbation
     mu,sigma:    normalization params
-    eps_pixel: max pixel-space L radius
+    eps_pixel: max pixel-space L∞ radius
     """
-    out = Path(out_dir); out.mkdir(exist_ok=True)
-    # recover raw pixel values in [0,1]
-    x0_raw   = x0 * sigma + mu
-    xadv_raw = np.clip(x0_raw + M * sigma, 0,1)
-    x0_raw   = np.clip(x0_raw, 0,1)
+    out = Path(out_dir)
+    out.mkdir(exist_ok=True)
+
+    # recover [0,1]
+    x0_raw   = np.clip(x0 * sigma + mu, 0, 1)
+    xadv_raw = np.clip(x0_raw + M * sigma,      0, 1)
+
+    # to uint8 for orig/adv
     orig = (x0_raw[0]*255).round().astype(np.uint8)
     adv  = (xadv_raw[0]*255).round().astype(np.uint8)
-    # build a mask heatmap from pixel‐space perturbation
-    mask_pixel = M * sigma
-    mask_norm  = np.clip((mask_pixel + eps_pixel)/(2*eps_pixel), 0,1)[0]
-    mask_rgb   = (plt.cm.hot(mask_norm)*255).astype(np.uint8)[...,:3]
 
+    # raw pixel-space mask in [-eps_pixel, +eps_pixel]
+    mask_pixel = (M * sigma)[0]   # shape (28,28)
+
+    # plot
     fig, axes = plt.subplots(1,3,figsize=(12,4))
-    axes[0].imshow(orig, cmap='gray'); axes[0].set_title("Original")
-    axes[1].imshow(mask_rgb);        axes[1].set_title("Perturbation")
-    axes[2].imshow(adv,  cmap='gray'); axes[2].set_title("Adversarial")
-    for ax in axes: ax.axis("off")
 
-    fn = out/f"{prefix}_cmp_{y0}_to_{t}_{time.time()}.png"
-    fig.savefig(fn, dpi=150)
+    axes[0].imshow(orig, cmap='gray')
+    axes[0].set_title("Original")
+    axes[0].axis('off')
+
+    # display raw Δpixel with a diverging cmap
+    im = axes[1].imshow(mask_pixel,
+                        cmap='seismic',
+                        vmin=-eps_pixel,
+                        vmax= eps_pixel)
+    axes[1].set_title("Perturbation")
+    axes[1].axis('off')
+    cbar = fig.colorbar(im, ax=axes[1], fraction=0.046, pad=0.04)
+
+    axes[2].imshow(adv, cmap='gray')
+    axes[2].set_title("Adversarial")
+    axes[2].axis('off')
+
+    fn = out / f"{prefix}_cmp_{y0}_to_{t}_{int(time.time())}.png"
+    fig.savefig(fn, dpi=150, bbox_inches='tight')
     plt.close(fig)
     print("Saved figure to", fn)
 

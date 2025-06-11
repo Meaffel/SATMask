@@ -8,7 +8,7 @@ from model import SimpleCNN
 
 # 1) Hyper-parameters & device
 batch_size    = 64
-learning_rate = 3e-3
+learning_rate = 5e-3
 num_epochs    = 10
 device        = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
